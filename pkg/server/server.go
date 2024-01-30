@@ -19,14 +19,15 @@ const defaultDifficulty = 4
 type Server struct {
 	Quotes              []string
 	ChallengeDifficulty int
+	challengeGen        challengeGenService
 }
 
 //go:embed quotes.yml
 var f embed.FS
 
 // New creates a Server
-func New(difficulty int) *Server {
-	server := &Server{ChallengeDifficulty: defaultDifficulty}
+func New(difficulty int, challengeGen challengeGenService) *Server {
+	server := &Server{ChallengeDifficulty: defaultDifficulty, challengeGen: challengeGen}
 	if difficulty > 0 {
 		server.ChallengeDifficulty = difficulty
 	}
@@ -83,11 +84,11 @@ func (s *Server) StartServer(host, port string) {
 func (s *Server) handleConnection(conn net.Conn) {
 	// Close the connection in the end
 	defer conn.Close()
-	randStr, err := generateRandomString()
+	challenge, err := s.challengeGen.generateChallenge(s.ChallengeDifficulty)
 	if err != nil {
-		log.Printf("can't generate random string for a challenge: %v", err)
+		log.Printf("can't generate a challenge: %v", err)
+		return
 	}
-	challenge := fmt.Sprintf("%d:%s", s.ChallengeDifficulty, randStr)
 	log.Printf("challenge: %s", challenge)
 
 	// Send the challenge to the client...
@@ -111,24 +112,6 @@ func (s *Server) handleConnection(conn net.Conn) {
 	} else {
 		log.Println("invalid Proof of Work solution received from client.")
 	}
-}
-
-// Function to generate a random string.
-func generateRandomString() (string, error) {
-	const charset = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
-	const charsetLen = len(charset)
-
-	bytes := make([]byte, 50)
-
-	if _, err := rand.Read(bytes); err != nil {
-		return "", err
-	}
-
-	for i, b := range bytes {
-		bytes[i] = charset[b%byte(charsetLen)]
-	}
-
-	return string(bytes), nil
 }
 
 // getRandomQuote returns a random quote from the collection.

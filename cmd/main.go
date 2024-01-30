@@ -26,7 +26,7 @@ func main() {
 			log.Fatalf("error converting difficulty to int: %v", err)
 		}
 		// Initialize the server with quotes from YAML.
-		server := server.New(difficulty)
+		server := server.New(difficulty, server.NewChallengeGen())
 
 		// Start the TCP server.
 		server.StartServer(host, port)

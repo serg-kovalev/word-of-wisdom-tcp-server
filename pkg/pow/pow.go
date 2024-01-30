@@ -17,9 +17,13 @@ func calculateHash(input string) string {
 
 // isValidHash checks if the hash meets the required difficulty.
 func isValidHash(hash string, difficulty int) bool {
-	prefix := fmt.Sprintf("%0*d", difficulty, 0)
+	if difficulty > 0 {
+		prefix := fmt.Sprintf("%0*d", difficulty, 0)
 
-	return hash[:difficulty] == prefix
+		return hash[:difficulty] == prefix
+	}
+
+	return false
 }
 
 // VerifyPoWSolution verifies the Proof of Work solution.
